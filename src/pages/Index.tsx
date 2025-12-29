@@ -1,4 +1,5 @@
 import { useDerivWebSocket } from '@/hooks/useDerivWebSocket';
+import { useAuth } from '@/hooks/useAuth';
 import { ControlSidebar } from '@/components/ControlSidebar';
 import { TopMetrics } from '@/components/TopMetrics';
 import { ProfitTimeline } from '@/components/ProfitTimeline';
@@ -6,8 +7,12 @@ import { AssetTable } from '@/components/AssetTable';
 import { ActivePositions } from '@/components/ActivePositions';
 import { AISignalCard } from '@/components/AISignalCard';
 import { ActivityTerminal } from '@/components/ActivityTerminal';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
+import { History, Settings, LogOut } from 'lucide-react';
 
 const Index = () => {
+  const { signOut } = useAuth();
   const {
     state,
     settings,
@@ -37,6 +42,28 @@ const Index = () => {
 
       {/* Main Content Area */}
       <div className="flex flex-1 flex-col overflow-hidden">
+        {/* Top Navigation */}
+        <div className="flex items-center justify-between border-b border-border bg-card/30 px-4 py-2">
+          <div className="flex items-center gap-2">
+            <Link to="/history">
+              <Button variant="ghost" size="sm" className="gap-2">
+                <History className="h-4 w-4" />
+                History
+              </Button>
+            </Link>
+            <Link to="/settings">
+              <Button variant="ghost" size="sm" className="gap-2">
+                <Settings className="h-4 w-4" />
+                Settings
+              </Button>
+            </Link>
+          </div>
+          <Button variant="ghost" size="sm" onClick={signOut} className="gap-2 text-muted-foreground">
+            <LogOut className="h-4 w-4" />
+            Sign Out
+          </Button>
+        </div>
+
         {/* Top Metrics Bar */}
         <TopMetrics
           balance={state.balance}

@@ -14,16 +14,201 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          email: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      trade_history: {
+        Row: {
+          contract_id: number
+          contract_type: string
+          created_at: string
+          entry_spot: number | null
+          executed_at: string
+          exit_spot: number | null
+          id: string
+          payout: number
+          profit: number
+          result: string
+          stake: number
+          symbol: string
+          user_id: string
+        }
+        Insert: {
+          contract_id: number
+          contract_type: string
+          created_at?: string
+          entry_spot?: number | null
+          executed_at?: string
+          exit_spot?: number | null
+          id?: string
+          payout: number
+          profit: number
+          result: string
+          stake: number
+          symbol: string
+          user_id: string
+        }
+        Update: {
+          contract_id?: number
+          contract_type?: string
+          created_at?: string
+          entry_spot?: number | null
+          executed_at?: string
+          exit_spot?: number | null
+          id?: string
+          payout?: number
+          profit?: number
+          result?: string
+          stake?: number
+          symbol?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          api_token: string | null
+          app_id: string | null
+          created_at: string
+          id: string
+          max_concurrent_trades: number | null
+          max_daily_loss: number | null
+          max_position_size: number | null
+          min_probability: number
+          notifications_enabled: boolean | null
+          profit_target: number
+          sound_enabled: boolean | null
+          stake_amount: number
+          theme: string | null
+          updated_at: string
+          user_id: string
+          vault_threshold: number
+        }
+        Insert: {
+          api_token?: string | null
+          app_id?: string | null
+          created_at?: string
+          id?: string
+          max_concurrent_trades?: number | null
+          max_daily_loss?: number | null
+          max_position_size?: number | null
+          min_probability?: number
+          notifications_enabled?: boolean | null
+          profit_target?: number
+          sound_enabled?: boolean | null
+          stake_amount?: number
+          theme?: string | null
+          updated_at?: string
+          user_id: string
+          vault_threshold?: number
+        }
+        Update: {
+          api_token?: string | null
+          app_id?: string | null
+          created_at?: string
+          id?: string
+          max_concurrent_trades?: number | null
+          max_daily_loss?: number | null
+          max_position_size?: number | null
+          min_probability?: number
+          notifications_enabled?: boolean | null
+          profit_target?: number
+          sound_enabled?: boolean | null
+          stake_amount?: number
+          theme?: string | null
+          updated_at?: string
+          user_id?: string
+          vault_threshold?: number
+        }
+        Relationships: []
+      }
+      vault_locks: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          locked_at: string
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          locked_at?: string
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          locked_at?: string
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +335,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const
