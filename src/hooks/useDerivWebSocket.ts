@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   DerivResponse,
   AuthorizeResponse,
@@ -14,6 +15,8 @@ import {
   ProposalOpenContractResponse,
   SellResponse,
 } from '@/types/deriv';
+import { useTradePersistence } from './useTradePersistence';
+import { useUserSettings } from './useUserSettings';
 
 const WS_URL = 'wss://ws.binaryws.com/websockets/v3?app_id=1089';
 const AUTH_TOKEN = 'bwQm6CfYuKyOduN';
@@ -29,6 +32,10 @@ export function useDerivWebSocket() {
   const lastTradeTimeRef = useRef(0);
   const pendingProposalsRef = useRef<Map<string, { symbol: string; direction: 'CALL' | 'PUT' }>>(new Map());
   const activeContractsRef = useRef<Set<number>>(new Set());
+
+  const { saveTrade, saveVaultLock } = useTradePersistence();
+  const { settings: dbSettings, vaultTotal } = useUserSettings();
+  const queryClient = useQueryClient();
 
   const [state, setState] = useState<TradingState>({
     isRunning: false,
@@ -56,6 +63,18 @@ export function useDerivWebSocket() {
     minProbability: 75,
     vaultThreshold: 3,
   });
+
+  useEffect(() => {
+    if (dbSettings) {
+      setSettings(dbSettings);
+    }
+  }, [dbSettings]);
+
+  useEffect(() => {
+    if (vaultTotal !== undefined) {
+      setState(prev => ({ ...prev, vaultBalance: vaultTotal }));
+    }
+  }, [vaultTotal]);
 
   const getNextReqId = useCallback(() => {
     reqIdRef.current += 1;
@@ -264,19 +283,21 @@ export function useDerivWebSocket() {
               const isWin = contract.status === 'won' || contract.profit > 0;
               const profit = contract.profit;
               
+              const newHistory: TradeHistoryEntry = {
+                id: `${contract.contract_id}-${Date.now()}`,
+                timestamp: Date.now(),
+                symbol: contract.underlying,
+                contractType: contract.contract_type.includes('CALL') ? 'CALL' : 'PUT',
+                stake: contract.payout - profit,
+                payout: contract.payout,
+                profit: profit,
+                result: isWin ? 'win' : 'loss',
+                contractId: contract.contract_id,
+              };
+
+              saveTrade(newHistory);
+
               setState(prev => {
-                const newHistory: TradeHistoryEntry = {
-                  id: `${contract.contract_id}-${Date.now()}`,
-                  timestamp: Date.now(),
-                  symbol: contract.underlying,
-                  contractType: contract.contract_type.includes('CALL') ? 'CALL' : 'PUT',
-                  stake: contract.payout - profit,
-                  payout: contract.payout,
-                  profit: profit,
-                  result: isWin ? 'win' : 'loss',
-                  contractId: contract.contract_id,
-                };
-                
                 const newPerformance = new Map(prev.assetPerformance);
                 const existing = newPerformance.get(contract.underlying);
                 if (existing) {
@@ -297,6 +318,8 @@ export function useDerivWebSocket() {
                 if (newTotalProfit >= settings.vaultThreshold) {
                   const toVault = Math.floor(newTotalProfit);
                   newVaultBalance += toVault;
+                  saveVaultLock(toVault, 'Auto-locked from profit threshold');
+                  queryClient.invalidateQueries({ queryKey: ['vault-total'] });
                   addLog('VLT', `Vault secured: $${toVault.toFixed(2)} | Total vault: $${newVaultBalance.toFixed(2)}`);
                 }
                 
@@ -365,7 +388,7 @@ export function useDerivWebSocket() {
     } catch (error) {
       addLog('ERR', `Parse error: ${error}`);
     }
-  }, [filterAllowedSymbols, sendMessage, buyContract, subscribeToContract, sellContract, settings, addLog]);
+  }, [filterAllowedSymbols, sendMessage, buyContract, subscribeToContract, sellContract, settings, addLog, saveTrade, saveVaultLock, queryClient]);
 
   const connect = useCallback(() => {
     if (wsRef.current?.readyState === WebSocket.OPEN) return;
